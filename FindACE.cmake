@@ -1,68 +1,67 @@
+################################################################################
 #
-# Find the ACE client includes and library
+# CMake script for finding ACE.
+# If the optional ACE_ROOT_DIR environment variable exists, header files and
+# libraries will be searched in the ACE_ROOT_DIR/include and ACE_ROOT_DIR/libs
+# directories, respectively. Otherwise the default CMake search process will be
+# used.
 #
+# This script creates the following variables:
+#  ACE_FOUND: Boolean that indicates if the package was found
+#  ACE_INCLUDE_DIRS: Paths to the necessary header files
+#  ACE_LIBRARIES: Package libraries
+#  ACE_LIBRARY_DIRS: Path to package libraries
+#
+################################################################################
 
-# This module defines
-# ACE_INCLUDE_DIR, where to find ace.h
-# ACE_LIBRARIES, the libraries to link against
-# ACE_FOUND, if false, you cannot build anything that requires ACE
+include(FindPackageHandleStandardArgs)
 
-# also defined, but not for general use are
-# ACE_LIBRARY, where to find the ACE library.
+# See if ACE_ROOT is not already set in CMake
+IF (NOT ACE_ROOT)
+    # See if ACE_ROOT is set in process environment
+    IF ( NOT $ENV{ACE_ROOT} STREQUAL "" )
+        SET (ACE_ROOT "$ENV{ACE_ROOT}")
+	MESSAGE(STATUS "Detected ACE_ROOT set to '${ACE_ROOT}'")
+    ENDIF ()
+ENDIF ()
 
-set( ACE_FOUND 0 )
-if ( UNIX )
-  FIND_PATH( ACE_INCLUDE_DIR
-    NAMES
-      ace/ACE.h
-    PATHS
-      /usr/include
-      /usr/include/ace
-      /usr/local/include
-      /usr/local/include/ace
-      ${ACE_ROOT}
-      ${ACE_ROOT}/include
-      $ENV{ACE_ROOT}
-      $ENV{ACE_ROOT}/include
-      # ${CMAKE_SOURCE_DIR}/dep/ACE_wrappers
-  DOC
-    "Specify include-directories that might contain ace.h here."
-  )
-  FIND_LIBRARY( ACE_LIBRARIES
-    NAMES
-      ace ACE
-    PATHS
-      /usr/lib
-      /usr/lib/ace
-      /usr/local/lib
-      /usr/local/lib/ace
-      /usr/local/ace/lib
-      ${ACE_ROOT}
-      ${ACE_ROOT}/lib
-      $ENV{ACE_ROOT}/lib
-      $ENV{ACE_ROOT}
-    DOC "Specify library-locations that might contain the ACE library here."
-  )
+# If ACE_ROOT is available, set up our hints
+IF (ACE_ROOT)
+    SET (ACE_INCLUDE_HINTS HINTS "${ACE_ROOT}/include" "${ACE_ROOT}")
+    SET (ACE_LIBRARY_HINTS HINTS "${ACE_ROOT}/lib")
+ENDIF ()
 
-#  FIND_LIBRARY( ACE_EXTRA_LIBRARIES
-#    NAMES
-#      z zlib
-#    PATHS
-#      /usr/lib
-#      /usr/local/lib
-#    DOC
-#      "if more libraries are necessary to link into ACE, specify them here."
-#  )
+# Find headers and libraries
+find_path(ACE_INCLUDE_DIR NAMES ace/ACE.h ${ACE_INCLUDE_HINTS})
+find_library(ACE_LIBRARY NAMES ACE ${ACE_LIBRARY_HINTS})
+find_library(ACED_LIBRARY NAMES ACE${CMAKE_DEBUG_POSTFIX} ${ACE_LIBRARY_HINTS})
+# Set ACE_LIBRARY ala boost: debug;libdebug;optimized;lib
+if (ACE_LIBRARY)
+  #message("ACE_LIBRARY found: ${ACE_LIBRARY}")
+  SET(ACE_LIBRARY optimized ${ACE_LIBRARY})
+else()
+  SET(ACE_LIBRARY "")
+endif()
+if (ACED_LIBRARY)
+  #message("ACED_LIBRARY found: ${ACED_LIBRARY}")
+  SET(ACE_LIBRARY debug ${ACED_LIBRARY} ${ACE_LIBRARY})
+endif()
 
-  if ( ACE_LIBRARIES )
-    if ( ACE_INCLUDE_DIR )
-      set( ACE_FOUND 1 )
-      message( STATUS "Found ACE library: ${ACE_LIBRARIES}")
-      message( STATUS "Found ACE headers: ${ACE_INCLUDE_DIR}")
-    else ( ACE_INCLUDE_DIR )
-      message(FATAL_ERROR "Could not find ACE headers! Please install ACE libraries and headers")
-    endif ( ACE_INCLUDE_DIR )
-  endif ( ACE_LIBRARIES )
 
-  mark_as_advanced( ACE_FOUND ACE_LIBRARIES ACE_EXTRA_LIBRARIES ACE_INCLUDE_DIR )
-endif (UNIX)
+# Set ACE_FOUND honoring the QUIET and REQUIRED arguments
+find_package_handle_standard_args(ACE DEFAULT_MSG ACE_LIBRARY ACE_INCLUDE_DIR)
+
+# Output variables
+if(ACE_FOUND)
+  # Include dirs
+  set(ACE_INCLUDE_DIRS ${ACE_INCLUDE_DIR})
+
+  # Libraries
+  set(ACE_LIBRARIES ${ACE_LIBRARY})
+
+  # Link dirs
+  #get_filename_component(ACE_LIBRARY_DIRS ${ACE_LIBRARY} PATH)
+endif()
+
+# Advanced options for not cluttering the cmake UIs
+mark_as_advanced(ACE_INCLUDE_DIR ACE_LIBRARY)
