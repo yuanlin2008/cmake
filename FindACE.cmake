@@ -8,9 +8,8 @@
 #
 # This script creates the following variables:
 #  ACE_FOUND: Boolean that indicates if the package was found
-#  ACE_INCLUDE_DIRS: Paths to the necessary header files
-#  ACE_LIBRARIES: Package libraries
-#  ACE_LIBRARY_DIRS: Path to package libraries
+#  ACE_INCLUDE_DIR: Paths to the necessary header files
+#  ACE_LIBRARY: Package libraries
 #
 ################################################################################
 
@@ -34,34 +33,9 @@ ENDIF ()
 # Find headers and libraries
 find_path(ACE_INCLUDE_DIR NAMES ace/ACE.h ${ACE_INCLUDE_HINTS})
 find_library(ACE_LIBRARY NAMES ACE ${ACE_LIBRARY_HINTS})
-find_library(ACED_LIBRARY NAMES ACE${CMAKE_DEBUG_POSTFIX} ${ACE_LIBRARY_HINTS})
-# Set ACE_LIBRARY ala boost: debug;libdebug;optimized;lib
-if (ACE_LIBRARY)
-  #message("ACE_LIBRARY found: ${ACE_LIBRARY}")
-  SET(ACE_LIBRARY optimized ${ACE_LIBRARY})
-else()
-  SET(ACE_LIBRARY "")
-endif()
-if (ACED_LIBRARY)
-  #message("ACED_LIBRARY found: ${ACED_LIBRARY}")
-  SET(ACE_LIBRARY debug ${ACED_LIBRARY} ${ACE_LIBRARY})
-endif()
-
 
 # Set ACE_FOUND honoring the QUIET and REQUIRED arguments
 find_package_handle_standard_args(ACE DEFAULT_MSG ACE_LIBRARY ACE_INCLUDE_DIR)
-
-# Output variables
-if(ACE_FOUND)
-  # Include dirs
-  set(ACE_INCLUDE_DIRS ${ACE_INCLUDE_DIR})
-
-  # Libraries
-  set(ACE_LIBRARIES ${ACE_LIBRARY})
-
-  # Link dirs
-  #get_filename_component(ACE_LIBRARY_DIRS ${ACE_LIBRARY} PATH)
-endif()
 
 # Advanced options for not cluttering the cmake UIs
 mark_as_advanced(ACE_INCLUDE_DIR ACE_LIBRARY)
